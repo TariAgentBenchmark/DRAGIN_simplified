@@ -1,3 +1,4 @@
+import os
 from typing import List, Tuple, Union, Dict
 import argparse
 import glob
@@ -16,7 +17,7 @@ def build_elasticsearch(
     print(f'#files {len(beir_corpus_files)}')
     from beir.retrieval.search.lexical.elastic_search import ElasticSearch
     config = {
-        'hostname': 'localhost',
+        'hostname': os.getenv('ELASTICSEARCH_HOST','localhost'),
         'index_name': index_name,
         'keys': {'title': 'title', 'body': 'txt'},
         'timeout': 100,

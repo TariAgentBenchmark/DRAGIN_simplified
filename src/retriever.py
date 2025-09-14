@@ -1,3 +1,4 @@
+import os
 from typing import List, Dict, Tuple
 from transformers import AutoTokenizer
 from beir.retrieval.evaluation import EvaluateRetrieval
@@ -12,7 +13,7 @@ class BM25:
         self.index_name = index_name
         self.es = BM25Search(
             index_name=index_name, 
-            hostname='localhost', 
+            hostname=os.getenv('ELASTICSEARCH_HOST', 'localhost'), 
             initialize=False,
             number_of_shards=1).es
         
