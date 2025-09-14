@@ -6,10 +6,7 @@ import string
 import spacy
 import torch
 from torch import Tensor
-from transformers import AutoModelForCausalLM, AutoConfig, AutoTokenizer
-from transformers.generation.utils import GenerateDecoderOnlyOutput # .generate(...)的输出。用来代码提示
-from transformers.generation.utils import GenerationMixin # 可以用GenerationMixin.generate查代码
-from transformers import PreTrainedModel, LlamaTokenizer # 用来代码提示
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from retriever import BM25
 
@@ -135,8 +132,8 @@ class Generator:
         output_ids = self.model.generate(
             input_ids=input_ids,
             max_new_tokens=max_length,
-            stop_strings = "\n",
-            tokenizer=self.tokenizer
+            # stop_strings = "\n",
+            # tokenizer=self.tokenizer
         )[0, input_length:]
         if output_ids.shape[0] == 0:
             # 应该没有这种情况吧，output_ids最少也该输出eos_token
@@ -204,10 +201,9 @@ class Generator:
             return_dict_in_generate=True,
             output_scores=True, # scores: Tuple[Tensor(batch_size, vocab_size)] len(scores) == generated_length
             # output_attentions=True
-            stop_strings="\n",
-            tokenizer=self.tokenizer
+            # stop_strings="\n",
+            # tokenizer=self.tokenizer
         )
-        outputs: GenerateDecoderOnlyOutput
 
         tokens = self.tokenizer.convert_ids_to_tokens(outputs.sequences[0, input_len_tokens:]) # List[str]
         ended = (tokens[-1] == self.tokenizer.eos_token)
