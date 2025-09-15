@@ -3,7 +3,7 @@ version: '3.8'
 services:
   elasticsearch:
     image: m.daocloud.io/docker.io/elasticsearch:7.17.28
-    container_name: dragin-elasticsearch
+    container_name: dragin-simplified-elasticsearch
     environment:
       - discovery.type=single-node
       - "ES_JAVA_OPTS=-Xms2g -Xmx2g"
@@ -23,13 +23,13 @@ services:
 
   dragin:
     image: crpi-lxfoqbwevmx9mc1q.cn-chengdu.personal.cr.aliyuncs.com/tari_tech/dragin-simplified:latest
-    container_name: dragin-app
+    container_name: dragin-simplified-app
     depends_on:
       elasticsearch:
         condition: service_healthy
     volumes:
-      - ${STORAGE_PATH:-.cache/huggingface}:/root/.cache/huggingface
-      - ${STORAGE_PATH:-.}:/app
+      - ${HF_HOME:-.cache/huggingface}:/root/.cache/huggingface
+      - ${SOURCE_PATH:-.}:/app
     networks:
       - dragin-network
     environment:

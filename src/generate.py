@@ -306,7 +306,15 @@ class DRAGIN:
             setattr(self, k, v)
         self.generator = Generator(self.model_name_or_path)
         self.tokenizer = self.generator.tokenizer
-        self.retriever = BM25("wiki" if "es_index_name" not in args else self.es_index_name)
+        # Select retriever based on config; default to BM25 for backward compatibility
+        retriever_name = getattr(args, "retriever", "BM25").upper()
+        if retriever_name == "BM25":
+            self.retriever = BM25("wiki" if "es_index_name" not in args else self.es_index_name)
+        elif retriever_name in ["TWO_STAGE", "TWO-STAGE", "HYBRID"]:
+            from two_stage_retriever import TwoStageRetriever
+            self.retriever = TwoStageRetriever(args)
+        else:
+            self.retriever = BM25("wiki" if "es_index_name" not in args else self.es_index_name)
         self.counter = Counter()
 
     def hallucination_check(
