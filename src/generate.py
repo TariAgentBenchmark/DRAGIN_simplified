@@ -217,6 +217,20 @@ class Generator:
         blocks.append(new_block)
         merged_blocks = merge_blocks(blocks)
 
+        # If no new tokens/words were generated (e.g., model immediately produced EOS),
+        # skip attention/entropy computations and return an empty-shaped output safely.
+        if new_block.len_tokens == 0 or new_block.len_words == 0:
+            empty_atten = torch.zeros((0, merged_blocks.len_words), device=self.model.device)
+            empty_vec = torch.zeros((0,), device=self.model.device)
+            return GeneratorOutput(
+                ended=ended,
+                blocks=blocks,
+                merged_blocks=merged_blocks,
+                atten=empty_atten,
+                max_atten=empty_vec,
+                entropies=empty_vec,
+            )
+
         # 下面这些和源代码差别挺大的。
         # - 源代码是单独new_tokens另外算了一组attention。这里尝试在原attention的基础上，截取对new_tokens的部分并归一化。
         # - 源代码的求最大attention的操作在求合并意义下的attention之前，这里反之。这里一开始就求了合并意义下的attention。
