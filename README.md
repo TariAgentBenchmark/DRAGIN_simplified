@@ -83,6 +83,22 @@ cd ../..
 python prep_elastic.py --data_path data/dpr/psgs_w100.tsv --index_name wiki  # build index
 ```
 
+### Build Dense Index (for Two-Stage retrieval)
+
+If you enable the two-stage retriever (BM25 + dense recall + cross-encoder re-ranking), build a dense FAISS index once:
+
+```bash
+# Install dependencies (recommended)
+uv pip install -r requirements.txt
+
+# Build dense index from DPR passages (psgs_w100.tsv)
+python src/build_dense_index.py \
+  --passage_file data/dpr/psgs_w100.tsv \
+  --output_dir data/dense_index \
+  --model_name intfloat/e5-base-v2 \
+  --batch_size 256
+```
+
 ### Download Dataset
 
 For 2WikiMultihopQA:
@@ -150,6 +166,35 @@ If you are using SGPT as the retriever, you should also include the following pa
 | `sgpt_model_name_or_path` | SGPT model                            | `Muennighoff/SGPT-1.3B-weightedmean-msmarco-specb-bitfit` |
 | `sgpt_encode_file_path`   | Folders to save SGPT encoding results | `../sgpt/encode_result`                                   |
 | `passage_file`            | Path to the Wikipedia dump            | `../data/dpr/psgs_w100.tsv`                               |
+
+If you are using TWO_STAGE as the retriever, you should also include the following parameters.
+
+| Parameter                   | Meaning                                                                 | example                                  |
+| --------------------------- | ----------------------------------------------------------------------- | ---------------------------------------- |
+| `dense_index_dir`           | Directory of the FAISS dense index (generated above)                    | `data/dense_index`                       |
+| `dense_model_name`          | SentenceTransformer model for dense embeddings                           | `intfloat/e5-base-v2`                    |
+| `cross_encoder_model`       | Cross-encoder model for paragraph re-ranking                             | `cross-encoder/ms-marco-MiniLM-L-6-v2`   |
+| `initial_bm25`              | Number of BM25 docs to recall in stage-1                                | 100                                       |
+| `initial_dense`             | Number of dense docs to recall in stage-1                               | 100                                       |
+| `paragraph_max_chars`       | Paragraph splitting size (characters) before re-ranking                  | 400                                       |
+| `max_paragraphs_to_score`   | Max paragraphs to score with cross-encoder per query                     | 200                                       |
+
+To enable two-stage retrieval, set `retriever` to `TWO_STAGE` and keep `es_index_name` configured for BM25. Example snippet:
+
+```json
+{
+  "retriever": "TWO_STAGE",
+  "es_index_name": "wiki",
+  "dense_index_dir": "data/dense_index",
+  "dense_model_name": "intfloat/e5-base-v2",
+  "cross_encoder_model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+  "initial_bm25": 100,
+  "initial_dense": 100,
+  "paragraph_max_chars": 400,
+  "max_paragraphs_to_score": 200,
+  "retrieve_topk": 3
+}
+```
 
 Here is the config file for using our approach to generate answers to the top 1000 questions of 2WikiMultihopQA using the model Llama-2-13b-chat.
 

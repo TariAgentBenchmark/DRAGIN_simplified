@@ -1,0 +1,33 @@
+{
+    "model_name_or_path": "meta-llama/Llama-2-13b-chat-hf",
+    "method": "dragin",
+    "dataset": "iirc",
+    "data_path": "/app/data/iirc",
+    "fewshot": 6,
+    "sample": 1000,
+    "shuffle": false,
+    "generate_max_length": 64,
+    "query_formulation": "real_words",
+    "retrieve_keep_top_k": 25,
+    "output_dir": "../result/llama2_13b_chat_iirc_two_stage",
+    "retriever": "TWO_STAGE",
+    "es_index_name": "wiki",
+    "retrieve_topk": 3,
+    "hallucination_threshold": 1.5,
+    "check_real_words": true,
+    "use_counter": true,
+    "dense_index_dir": "/app/data/dense_index",
+    "dense_model_name": "intfloat/e5-base-v2",
+    "cross_encoder_model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+    "initial_bm25": 100,
+    "initial_dense": 100,
+    "paragraph_max_chars": 400,
+    "max_paragraphs_to_score": 200
+}
+
+
+
+
+
+
+

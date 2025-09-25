@@ -214,5 +214,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
-
 result*
+stored_tokens
+token
