@@ -9,11 +9,16 @@
     "generate_max_length": 64,
     "query_formulation": "real_words",
     "retrieve_keep_top_k": 25,
-    "output_dir": "../result/llama2_13b_chat_2wikimultihopqa",
+    "output_dir": "../result/llama2_13b_chat_2wikimultihopqa_main_rag",
     "retriever": "BM25",
     "es_index_name": "wiki",
     "retrieve_topk": 3,
     "hallucination_threshold": 1.5,
     "check_real_words": true,
-    "use_counter": true
+    "use_counter": true,
+    "main_rag": true,
+    "main_rag_sigma_scale": 0.0,
+    "main_rag_pred_max_len": 48
 }
+
+

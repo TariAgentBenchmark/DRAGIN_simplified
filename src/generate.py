@@ -9,6 +9,7 @@ from torch import Tensor
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from retriever import BM25
+from main_rag import main_rag_filter
 
 DEBUG = True
 
@@ -217,6 +218,20 @@ class Generator:
         blocks.append(new_block)
         merged_blocks = merge_blocks(blocks)
 
+        if len(range_) == 0:
+            device = self.model.device
+            atten = torch.empty((0, merged_blocks.len_words), device=device)
+            max_atten = torch.empty((0,), device=device)
+            entropies = torch.empty((0,), device=device)
+            return GeneratorOutput(
+                ended=ended,
+                blocks=blocks,
+                merged_blocks=merged_blocks,
+                atten=atten,
+                max_atten=max_atten,
+                entropies=entropies
+            )
+
         # 下面这些和源代码差别挺大的。
         # - 源代码是单独new_tokens另外算了一组attention。这里尝试在原attention的基础上，截取对new_tokens的部分并归一化。
         # - 源代码的求最大attention的操作在求合并意义下的attention之前，这里反之。这里一开始就求了合并意义下的attention。
@@ -307,6 +322,12 @@ class DRAGIN:
         self.generator = Generator(self.model_name_or_path)
         self.tokenizer = self.generator.tokenizer
         self.retriever = BM25("wiki" if "es_index_name" not in args else self.es_index_name)
+        if "main_rag" not in self.__dict__:
+            self.main_rag = False
+        if "main_rag_sigma_scale" not in self.__dict__:
+            self.main_rag_sigma_scale = 0.0
+        if "main_rag_pred_max_len" not in self.__dict__:
+            self.main_rag_pred_max_len = 48
         self.counter = Counter()
 
     def hallucination_check(
@@ -463,8 +484,21 @@ class DRAGIN:
                 # 归一化是否更好有待商榷，问题在于，幻觉在多大程度上被few-shot所影响。
                 # 如果某词的注意力集中在few-shot部分，那么将归一化的后的注意力值强行安在限制的区域内，说不定会造成偏差。
 
-                docs = self.retriever(retrieve_qry, topk=self.retrieve_topk)
+                raw_docs = self.retriever(retrieve_qry, topk=self.retrieve_topk)
                 self.counter.retrieve += 1
+                if getattr(self, "main_rag", False):
+                    filtered_docs, scores, threshold = main_rag_filter(
+                        self.generator,
+                        question,
+                        raw_docs,
+                        max_predict_len=self.main_rag_pred_max_len,
+                        sigma_scale=self.main_rag_sigma_scale,
+                    )
+                    docs = filtered_docs if filtered_docs else raw_docs
+                    if DEBUG:
+                        print("MAIN-RAG 评分：", scores, "阈值：", threshold, sep=" ")
+                else:
+                    docs = raw_docs
                 if DEBUG:
                     print("检索得到补充资料：", docs, sep="\n")
                 # 重新生成新的文本：
